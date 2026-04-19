@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Православные храмы Владивостока</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        h1 { text-align: center; color: #8B4513; }
+        #map { height: 400px; width: 100%; margin: 20px 0; }
+        input, select { padding: 10px; margin: 10px; width: 200px; }
+        #churches { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .church { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+    </style>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=ТВОЙ_API_КЛЮЧ&lang=ru_RU" type="text/javascript"></script>
+</head>
+<body>
+    <h1>Информационный сайт православных храмов г. Владивостока</h1>
+    <input type="text" id="search" placeholder="Поиск по названию или адресу">
+    <select id="filter">
+        <option value="all">Все</option>
+        <option value="sobor">Соборы</option>
+        <option value="hram">Храмы</option>
+    </select>
+    <button onclick="applyFilters()">Применить</button>
+    <div id="map" style="display:none;"></div>
+    <div id="churches"></div>
+
+    <script>
+        const churches = [
+            {name: "Спасо-Преображенский кафедральный собор", type: "sobor", address: "ул. Светланская, 28", phone: "+7(423)233-XX-XX", coords: [43.115, 131.886]},
+            {name: "Свято-Никольский кафедральный собор", type: "sobor", address: "ул. Махалина, 30", phone: "+7(423)236-XX-XX", coords: [43.118, 131.890]},
+            {name: "Храм Покрова Божией Матери", type: "hram", address: "Океанский пр-т, 44 (Покровский парк)", phone: "8(914)704-48-14", coords: [43.109, 131.872]},
+            {name: "Казанский храм", type: "hram", address: "ул. Верхнепортовая, 74", phone: "(423)251-10-99", coords: [43.112, 131.895]},
+            {name: "Храм Новомучеников", type: "hram", address: "ул. Шуйская, 23-А", phone: "8(902)555-64-86", coords: [43.130, 131.910]},
+            {name: "Успенский Кафедральный собор", type: "sobor", address: "ул. Кирова, 30", phone: "8(950)776-49-51", coords: [43.105, 131.880]},
+            {name: "Храм Порт-Артурской иконы", type: "hram", address: "ул. Светланская, 65", phone: "", coords: [43.116, 131.888]},
+            {name: "Храм св. Игоря Черниговского", type: "hram", address: "ул. Фонтанная, 12", phone: "", coords: [43.120, 131.885]},
+            {name: "Храм Андрея Первозванного", type: "hram", address: "ул. Новожилова, 7", phone: "", coords: [43.125, 131.892]},
+            {name: "Марфо-Мариинская обитель", type: "hram", address: "ул. 14-я, 32 (Седанка)", phone: "", coords: [43.150, 131.950]}
+        ];
+
+        function initMap() {
+            ymaps.ready(() => {
+                const map = new ymaps.Map('map', { center: [43.115, 131.885], zoom: 12 });
+                churches.forEach(c => {
+                    ymaps.geocode(c.address).then(res => {
+                        const coords = res.geoObjects.get(0).geometry.getCoordinates();
+                        map.geoObjects.add(new ymaps.Placemark(coords, { balloonContent: c.name }));
+                    });
+                });
+            });
+            document.getElementById('map').style.display = 'block';
+        }
+
+        function renderChurches(list) {
+            const container = document.getElementById('churches');
+            container.innerHTML = list.map(c => `
+                <div class="church" onclick="ymaps.ready(initMap)">
+                    <h3>${c.name}</h3>
+                    <p>Адрес: ${c.address}</p>
+                    <p>Тел: ${c.phone || 'Не указан'}</p>
+                    <button onclick="initMap()">Показать на карте</button>
+                </div>
+            `).join('');
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const filter = document.getElementById('filter').value;
+            const filtered = churches.filter(c => 
+                (c.name.toLowerCase().includes(query) || c.address.toLowerCase().includes(query)) &&
+                (filter === 'all' || c.type === filter)
+            );
+            renderChurches(filtered);
+        }
+
+        renderChurches(churches);
+        document.getElementById('search').addEventListener('input', applyFilters);
+    </script>
+</body>
+</html>
